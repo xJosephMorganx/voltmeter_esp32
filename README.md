@@ -1,21 +1,40 @@
 # ESP32 Web Voltmeter
 
-A browser-based voltmeter for ESP32 boards. The ESP32 reads an analog voltage from its ADC, hosts a web page over Wi-Fi, and displays the measured value as a responsive gauge with a moving needle.
+An ESP32-based voltmeter with a browser dashboard. The board reads an analog voltage through its ADC, hosts a small web server over Wi-Fi, and shows the measurement with a responsive gauge, raw ADC value, connection status, and light/dark theme support.
 
-The web interface is served directly from the ESP32 program memory, so no SPIFFS, LittleFS, external server, or frontend build step is required.
+The web page is embedded directly in program memory, so the project does not require SPIFFS, LittleFS, an external server, or a frontend build step.
 
-## Overview
+## Preview
 
-![ESP32 Web Voltmeter preview](assets/web-preview.png)
+![ESP32 Web Voltmeter dashboard](assets/web-preview.png)
 
-Features:
+## Features
 
-- Real-time voltage display using an animated gauge.
+- Real-time voltage readings from an ESP32 ADC pin.
+- Animated semicircular gauge with smooth needle movement.
 - Raw ADC value display.
-- Configurable visual range: `3.3 V`, `5 V`, `12 V`, or custom.
-- Light and dark mode toggle with browser preference storage.
-- Self-contained ESP32 web server.
-- Modular web assets split into HTML, CSS, and JavaScript headers.
+- Configurable display range: `3.3 V`, `5 V`, `12 V`, or custom.
+- Light and dark mode toggle with local browser preference storage.
+- Offline simulation mode when the browser cannot reach the ESP32 API.
+- Self-contained web server using the Arduino `WebServer` library.
+- HTML, CSS, and JavaScript separated into dedicated header files.
+
+## Hardware Requirements
+
+| Component | Notes |
+| --- | --- |
+| ESP32 development board | Any common ESP32 board with ADC-capable pins should work. |
+| USB cable | Used for programming, serial output, and power. |
+| Analog voltage source | Keep the ADC input within the safe ESP32 range. |
+| Jumper wires | Used for basic signal and ground connections. |
+| Potentiometer | Optional, useful for testing variable voltage readings. |
+| Voltage divider or signal conditioning circuit | Required when measuring more than `3.3 V`. |
+
+## Software Requirements
+
+- Arduino IDE.
+- ESP32 board package for Arduino IDE.
+- A browser connected to the same Wi-Fi network as the ESP32.
 
 ## Project Structure
 
@@ -27,67 +46,31 @@ VoltmeterESP32/
 ├── script_js.h
 ├── assets/
 │   └── web-preview.png
-├── .gitignore
+├── LICENSE
 └── README.md
 ```
 
-Files:
-
-- `VoltmeterESP32.ino`: main Arduino sketch, Wi-Fi setup, ADC reading, and HTTP routes.
-- `index_html.h`: embedded HTML served at `/`.
-- `style_css.h`: embedded CSS served at `/style.css`.
-- `script_js.h`: embedded JavaScript served at `/script.js`.
-- `assets/web-preview.png`: optional screenshot used in the Overview section.
-
-## Hardware Requirements
-
-- ESP32 development board.
-- USB cable for programming and power.
-- Analog voltage source to measure.
-- Jumper wires.
-- Optional: potentiometer for testing.
-- Required for voltages above `3.3 V`: external voltage divider or signal conditioning circuit.
-
-## ADC Pin
-
-The default ADC input pin is:
-
-```cpp
-const int ADC_PIN = 34;
-```
-
-`GPIO34` is input-only and commonly used as an ADC pin on ESP32 boards, which makes it a good default for this project.
-
-The ADC configuration uses:
-
-```cpp
-analogReadResolution(12);
-analogSetPinAttenuation(ADC_PIN, ADC_11db);
-```
-
-The sketch converts the raw ADC reading with:
-
-```cpp
-const float ADC_REFERENCE_VOLTAGE = 3.3;
-const int ADC_MAX_READING = 4095;
-```
-
-If you use another ADC pin or a different calibration strategy, update these constants in `VoltmeterESP32.ino`.
+| File | Purpose |
+| --- | --- |
+| `VoltmeterESP32.ino` | Main Arduino sketch with Wi-Fi setup, ADC reading, HTTP routes, and the main loop. |
+| `index_html.h` | Embedded HTML served at `/`. |
+| `style_css.h` | Embedded CSS served at `/style.css`. |
+| `script_js.h` | Embedded JavaScript served at `/script.js`. |
+| `assets/web-preview.png` | Screenshot used in the Preview section. |
+| `LICENSE` | Project license. |
 
 ## Wiring
 
-Basic wiring:
+Basic wiring for a signal that is already safe for the ESP32 ADC:
 
 ```text
 Signal to measure  -> GPIO34
 Circuit ground     -> GND
 ```
 
-Important safety note:
+Important: do not connect more than `3.3 V` directly to an ESP32 ADC pin. Higher voltages can permanently damage the board.
 
-Do not connect more than `3.3 V` directly to an ESP32 ADC pin. If the voltage you want to measure is higher than `3.3 V`, use a voltage divider or another signal conditioning circuit before connecting it to the ESP32.
-
-Example voltage divider for higher voltages:
+For voltages above `3.3 V`, use a voltage divider or another signal conditioning circuit:
 
 ```text
 Measured voltage -> R1 -> ADC pin -> R2 -> GND
@@ -95,27 +78,53 @@ Measured voltage -> R1 -> ADC pin -> R2 -> GND
 
 Choose resistor values so the ADC pin never receives more than `3.3 V`.
 
-## Wi-Fi Configuration
+## Default ADC Configuration
 
-Open `VoltmeterESP32.ino` and edit these constants:
+The default ADC pin is `GPIO34`:
+
+```cpp
+const int ADC_PIN = 34;
+```
+
+`GPIO34` is input-only and commonly used for analog readings on ESP32 boards.
+
+The sketch configures 12-bit ADC readings and `ADC_11db` attenuation:
+
+```cpp
+analogReadResolution(12);
+analogSetPinAttenuation(ADC_PIN, ADC_11db);
+```
+
+The voltage calculation uses these constants:
+
+```cpp
+const float ADC_REFERENCE_VOLTAGE = 3.3;
+const int ADC_MAX_READING = 4095;
+```
+
+If you use a voltage divider, update the conversion logic so the displayed voltage represents the original measured voltage, not only the voltage present at the ADC pin.
+
+## Wi-Fi Setup
+
+Open `VoltmeterESP32.ino` and update the Wi-Fi credentials:
 
 ```cpp
 const char* WIFI_SSID = "YOUR_WIFI_NAME";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 ```
 
-Use the name and password of the Wi-Fi network where your ESP32 and browser will be connected.
+The ESP32 and the browser must be connected to the same network.
 
 ## Uploading With Arduino IDE
 
 1. Install the ESP32 board package in Arduino IDE.
 2. Open `VoltmeterESP32.ino`.
-3. Select your ESP32 board from the board menu.
+3. Select the correct ESP32 board.
 4. Select the correct USB port.
 5. Update `WIFI_SSID` and `WIFI_PASSWORD`.
 6. Upload the sketch.
 7. Open the Serial Monitor at `115200 baud`.
-8. Wait for the ESP32 to print an address like:
+8. Wait for the ESP32 to print an address like this:
 
 ```text
 Server ready: http://192.168.1.50
@@ -127,14 +136,18 @@ Open that address in a browser connected to the same Wi-Fi network.
 
 The ESP32 starts a web server on port `80` and exposes these routes:
 
-- `/`: serves the HTML interface.
-- `/style.css`: serves the CSS.
-- `/script.js`: serves the JavaScript.
-- `/api/voltage`: returns the latest ADC measurement as JSON.
+| Route | Description |
+| --- | --- |
+| `/` | Serves the dashboard HTML. |
+| `/style.css` | Serves the dashboard styles. |
+| `/script.js` | Serves the dashboard behavior. |
+| `/api/voltage` | Returns the latest ADC reading as JSON. |
 
-The browser loads the page from the ESP32. The JavaScript then polls `/api/voltage`, updates the numeric voltage, and rotates the gauge needle based on the measured value.
+The browser loads the dashboard from the ESP32 and polls `/api/voltage` every `700 ms`. Each response updates the numeric voltage, raw ADC value, gauge arc, and needle position.
 
-## API
+If the browser cannot reach the API, the dashboard switches to simulation mode so the interface can still be previewed.
+
+## API Response
 
 Request:
 
@@ -152,21 +165,21 @@ Example response:
 }
 ```
 
-Response fields:
-
-- `raw`: raw ADC reading from `0` to `4095`.
-- `voltage`: calculated input voltage.
-- `maxVoltage`: reference voltage used by the sketch.
+| Field | Description |
+| --- | --- |
+| `raw` | Raw ADC reading from `0` to `4095`. |
+| `voltage` | Calculated voltage at the ADC pin. |
+| `maxVoltage` | ADC reference voltage used by the sketch. |
 
 ## Customization
 
-To change the ADC pin:
+To change the ADC pin, update this constant:
 
 ```cpp
 const int ADC_PIN = 34;
 ```
 
-To adjust the voltage conversion:
+To adjust the basic ADC conversion, update these constants:
 
 ```cpp
 const float ADC_REFERENCE_VOLTAGE = 3.3;
@@ -175,14 +188,24 @@ const int ADC_MAX_READING = 4095;
 
 To edit the web interface:
 
-- Modify `index_html.h` for HTML.
-- Modify `style_css.h` for visual styles.
-- Modify `script_js.h` for gauge behavior, polling, and theme logic.
+- Modify `index_html.h` for page structure.
+- Modify `style_css.h` for visual styling.
+- Modify `script_js.h` for gauge behavior, polling, theme handling, and simulation mode.
 
-The page's visual range selector does not increase the safe physical ADC input range. It only changes how the measured value is displayed on the gauge.
+The dashboard range selector only changes the visual gauge range. It does not make the ESP32 ADC pin safe for higher voltages.
+
+## Troubleshooting
+
+| Problem | What to check |
+| --- | --- |
+| The Serial Monitor never shows an IP address. | Confirm the Wi-Fi name and password, then verify the ESP32 is within range of the router. |
+| The browser cannot open the dashboard. | Make sure the browser device is on the same network as the ESP32. |
+| The dashboard shows `Simulation`. | The browser loaded the page but cannot reach `/api/voltage`; refresh the page and check the ESP32 IP address. |
+| The voltage looks inaccurate. | Check the ADC input voltage with a multimeter and calibrate the conversion constants or voltage divider formula. |
+| Readings jump around. | Use short ground connections, avoid floating inputs, and add signal conditioning if the measured source is noisy. |
 
 ## License
 
 This project is released under the GNU General Public License v3.0.
 
-The GPL-3.0 license requires derivative works to remain open source under the same license terms. This is intentional so that improvements and projects based on this guide can remain available to the community.
+The GPL-3.0 license requires derivative works to remain open source under the same license terms. This helps keep improvements available to the community.
