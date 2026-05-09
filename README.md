@@ -183,6 +183,6 @@ The page's visual range selector does not increase the safe physical ADC input r
 
 ## License
 
-This project will be released under the GNU General Public License v3.0.
+This project is released under the GNU General Public License v3.0.
 
 The GPL-3.0 license requires derivative works to remain open source under the same license terms. This is intentional so that improvements and projects based on this guide can remain available to the community.
