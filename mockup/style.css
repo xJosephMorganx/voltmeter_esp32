@@ -1,8 +1,3 @@
-#pragma once
-
-#include <Arduino.h>
-
-const char STYLE_CSS[] PROGMEM = R"rawliteral(
 :root {
   --bg: #070c0f;
   --panel: #0b1115;
@@ -747,5 +742,3 @@ input:focus {
     gap: 8px;
   }
 }
-
-)rawliteral";

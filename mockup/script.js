@@ -1,14 +1,8 @@
-#pragma once
-
-#include <Arduino.h>
-
-const char SCRIPT_JS[] PROGMEM = R"rawliteral(
-const API_URL = "/api/voltage";
 const MIN_ANGLE = -90;
 const MAX_ANGLE = 90;
 const ARC_LENGTH = 502.65;
 const POLL_MS = 700;
-const THEME_STORAGE_KEY = "esp32-voltmeter-theme-v2";
+const THEME_STORAGE_KEY = "esp32-voltmeter-mockup-theme";
 
 const voltageValue = document.querySelector("#voltageValue");
 const rawValue = document.querySelector("#rawValue");
@@ -211,34 +205,24 @@ function renderLcdValue(element, value) {
   }
 }
 
-function simulateVoltage() {
-  simulatedPhase += 0.12;
-  const maxVoltage = getMaxVoltage();
-  return (Math.sin(simulatedPhase) * 0.5 + 0.5) * maxVoltage;
+function calculateRawFromVoltage(voltage) {
+  return Math.round(clamp(voltage / 3.3, 0, 1) * 4095);
 }
 
-async function fetchVoltage() {
-  try {
-    const response = await fetch(API_URL, { cache: "no-store" });
+function getSimulatedVoltage() {
+  simulatedPhase += 0.11;
+  const maxVoltage = getMaxVoltage();
+  const wave = Math.sin(simulatedPhase) * 0.5 + 0.5;
+  const drift = Math.sin(simulatedPhase * 0.27) * 0.08;
+  return clamp((wave * 0.86 + 0.07 + drift) * maxVoltage, 0, maxVoltage);
+}
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
+function fetchVoltage() {
+  const voltage = getSimulatedVoltage();
+  const raw = calculateRawFromVoltage(voltage);
 
-    const data = await response.json();
-    const voltage = Number(data.voltage);
-
-    if (!Number.isFinite(voltage)) {
-      throw new Error("Invalid reading");
-    }
-
-    setStatus("online", "Online");
-    updateGauge(voltage, data.raw);
-  } catch (error) {
-    const simulated = simulateVoltage();
-    setStatus("offline", "Simulation");
-    updateGauge(simulated, null);
-  }
+  setStatus("online", "Online");
+  updateGauge(voltage, raw);
 }
 
 themeToggle.addEventListener("change", () => {
@@ -257,4 +241,3 @@ renderTicks();
 updateGauge(0, 0);
 fetchVoltage();
 window.setInterval(fetchVoltage, POLL_MS);
-)rawliteral";

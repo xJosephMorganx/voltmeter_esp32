@@ -21,3 +21,4 @@ Thumbs.db
 # Local environment files
 .env
 .env.*
+.codex/

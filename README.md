@@ -16,6 +16,7 @@ The web page is embedded directly in program memory, so the project does not req
 - Configurable display range: `3.3 V`, `5 V`, `12 V`, or custom.
 - Light and dark mode toggle with local browser preference storage.
 - Offline simulation mode when the browser cannot reach the ESP32 API.
+- Browser-only mockup for UI iteration without flashing the ESP32.
 - Self-contained web server using the Arduino `WebServer` library.
 - HTML, CSS, and JavaScript separated into dedicated header files.
 
@@ -44,6 +45,11 @@ VoltmeterESP32/
 ├── index_html.h
 ├── style_css.h
 ├── script_js.h
+├── mockup/
+│   ├── index.html
+│   ├── style.css
+│   ├── script.js
+│   └── README.md
 ├── assets/
 │   └── web-preview.png
 ├── LICENSE
@@ -56,6 +62,7 @@ VoltmeterESP32/
 | `index_html.h` | Embedded HTML served at `/`. |
 | `style_css.h` | Embedded CSS served at `/style.css`. |
 | `script_js.h` | Embedded JavaScript served at `/script.js`. |
+| `mockup/` | Browser-only version of the dashboard for fast visual design work without an ESP32. |
 | `assets/web-preview.png` | Screenshot used in the Preview section. |
 | `LICENSE` | Project license. |
 
@@ -132,6 +139,31 @@ Server ready: http://192.168.1.50
 
 Open that address in a browser connected to the same Wi-Fi network.
 
+## Local Web Mockup
+
+The `mockup/` folder contains a standalone browser version of the dashboard. Use it when adjusting layout, spacing, colors, gauge details, or responsive behavior without compiling or uploading firmware.
+
+Open the mockup directly:
+
+```text
+mockup/index.html
+```
+
+Or run a simple local server:
+
+```bash
+cd mockup
+python -m http.server 8080
+```
+
+Then open:
+
+```text
+http://localhost:8080
+```
+
+The mockup simulates voltage and Raw ADC values in the browser. It does not call `/api/voltage`, does not need Wi-Fi, and does not require an ESP32. After the design is approved, copy the relevant HTML, CSS, and presentation-only JavaScript changes back into the embedded header files.
+
 ## How It Works
 
 The ESP32 starts a web server on port `80` and exposes these routes:
@@ -188,9 +220,10 @@ const int ADC_MAX_READING = 4095;
 
 To edit the web interface:
 
-- Modify `index_html.h` for page structure.
-- Modify `style_css.h` for visual styling.
-- Modify `script_js.h` for gauge behavior, polling, theme handling, and simulation mode.
+- Use `mockup/` first for visual design changes.
+- Modify `index_html.h` for the embedded page structure.
+- Modify `style_css.h` for embedded visual styling.
+- Modify `script_js.h` for gauge behavior, polling, theme handling, and fallback simulation mode.
 
 The dashboard range selector only changes the visual gauge range. It does not make the ESP32 ADC pin safe for higher voltages.
 

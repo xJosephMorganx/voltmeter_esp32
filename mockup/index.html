@@ -1,15 +1,10 @@
-#pragma once
-
-#include <Arduino.h>
-
-const char INDEX_HTML[] PROGMEM = R"rawliteral(
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>ESP32 Voltmeter</title>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="./style.css">
   </head>
   <body>
     <main class="app-shell">
@@ -105,8 +100,6 @@ const char INDEX_HTML[] PROGMEM = R"rawliteral(
         </footer>
       </section>
     </main>
-    <script src="/script.js"></script>
+    <script src="./script.js"></script>
   </body>
 </html>
-
-)rawliteral";
